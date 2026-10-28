@@ -1,0 +1,1376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What a Neural Network Learned From 250 Years of Classical Music — Matis Brassard-Verrier</title>
+<meta name="description" content="I trained a neural network to compress and replay single bars of classical music, from Corelli to Medtner, then looked inside to see what it had learned on its own.">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../assets/site.css">
+<style>
+  :root {
+    --text: #1f2328;
+    --muted: #5b636e;
+    --background: #fdfcf9;
+    --surface: #f3f1ea;
+    --accent: #2f5d8a;
+    --accent-2: #b5562d;
+    --rule: #e2ded3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --text: #e6e3dc;
+      --muted: #a9a59c;
+      --background: #17181a;
+      --surface: #222326;
+      --accent: #8fb6dd;
+      --accent-2: #e8a07a;
+      --rule: #34353a;
+    }
+    figure img { background: #fff; border-radius: 4px; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--text);
+    font: 18px/1.65 Arial, Helvetica, sans-serif;
+  }
+  article { max-width: 720px; margin: 0 auto; padding: 48px 16px 80px; }
+  h1, h2, h3 { font-family: Arial, Helvetica, sans-serif; line-height: 1.25; }
+  h1 { font-size: 2.1em; margin: 0 0 0.3em; }
+  h2 { font-size: 1.45em; margin: 2.2em 0 0.6em; padding-top: 0.6em; border-top: 1px solid var(--rule); }
+  h3 { font-size: 1.15em; margin: 1.8em 0 0.4em; }
+  .subtitle { color: var(--muted); font-size: 1.1em; margin: 0 0 2em; }
+  a { color: var(--accent); }
+  figure { margin: 2em 0; }
+  figure img { width: 100%; height: auto; display: block; }
+  figcaption { color: var(--muted); font-size: 0.85em; line-height: 1.5; margin-top: 0.6em; }
+  .listen {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 1.6em 0;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.85em;
+  }
+  .listen p { margin: 0 0 8px; }
+  .listen audio { width: 100%; }
+  .aside {
+    border-left: 3px solid var(--accent);
+    padding: 4px 0 4px 16px;
+    margin: 1.6em 0;
+    color: var(--muted);
+    font-size: 0.95em;
+  }
+  .numbers { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 1.6em 0; }
+  .number { background: var(--surface); border-radius: 8px; padding: 14px; font-family: Arial, Helvetica, sans-serif; }
+  .number strong { display: block; font-size: 1.6em; color: var(--accent); }
+  .number span { font-size: 0.8em; color: var(--muted); line-height: 1.4; display: block; }
+  ul { padding-left: 1.2em; }
+  li { margin: 0.3em 0; }
+  .limits li { margin: 0.9em 0; }
+  .limits .next { display: block; margin-top: 0.25em; color: var(--muted); }
+  .diagram svg { width: 100%; height: auto; display: block; }
+  .diagram .ink { stroke: var(--text); fill: none; }
+  .diagram .ink-fill { fill: var(--text); }
+  .diagram .soft { fill: var(--surface); stroke: var(--rule); }
+  .diagram .accent { fill: var(--accent); }
+  .diagram .accent-line { stroke: var(--accent); fill: none; }
+  .diagram .muted { fill: var(--muted); }
+  .diagram .thirds { stroke: var(--accent-2); fill: none; }
+  .diagram .thirds-fill { fill: var(--accent-2); }
+  .diagram .accent-text { fill: var(--accent); font-weight: 600; }
+  .diagram .thirds-fill-text { fill: var(--accent-2); font-weight: 600; }
+  .diagram .muted-text { fill: var(--muted); }
+  .diagram .beat { stroke: var(--rule); stroke-width: 1; }
+  .hero { margin: 0 0 2.2em; }
+  .hero-stops { position: relative; height: 2.6em; margin-top: 0.3em;
+    font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; line-height: 1.3; }
+  .hero-stops span { position: absolute; top: 0; white-space: nowrap; }
+  .hero-stops small { display: block; font-size: 0.9em; opacity: 0.8; }
+  .walk audio { width: 100%; margin-top: 0.6em; }
+  .diagram .note { fill: var(--text); }
+  .diagram .note-wrong { fill: var(--accent-2); }
+  .diagram .note-missing { fill: none; stroke: var(--accent-2); stroke-width: 1.2; }
+  .reconstruction-scores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 0.3em;
+    font-family: Arial, Helvetica, sans-serif; font-size: 0.8em; color: var(--muted); text-align: center; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; justify-content: center; margin-top: 0.6em;
+    font-family: Arial, Helvetica, sans-serif; font-size: 0.8em; color: var(--muted); }
+  .legend i { display: inline-block; width: 16px; height: 7px; border-radius: 1.5px; margin-right: 6px; vertical-align: middle; }
+  .legend .key-right { background: var(--text); }
+  .legend .key-wrong { background: var(--accent-2); }
+  .legend .key-missing { border: 1.2px solid var(--accent-2); box-sizing: border-box; }
+  .table-wrap { overflow-x: auto; margin: 1.4em 0; }
+  table.scores { width: 100%; border-collapse: collapse; font-family: Arial, Helvetica, sans-serif; font-size: 0.85em; }
+  table.scores th, table.scores td { padding: 6px 10px; border-bottom: 1px solid var(--rule); text-align: right; }
+  table.scores th:first-child, table.scores td:first-child { text-align: left; }
+  table.scores thead th { color: var(--muted); font-weight: 600; }
+  table.scores tr.group th { text-align: left; background: var(--surface); color: var(--text); font-weight: 600; }
+  .diagram text { font-family: Arial, Helvetica, sans-serif; fill: var(--text); }
+  math[display="block"] { margin: 1.2em 0; font-size: 1.05em; overflow-x: auto; }
+  .terms { margin-top: 0.4em; }
+  .toc { margin: 2em 0; font-size: 0.9em; }
+  .toc p { margin: 0 0 0.4em; font-weight: bold; }
+  .toc ul { list-style: none; padding: 0; margin: 0; }
+  .toc li { margin: 0.2em 0; }
+  article footer { margin-top: 3em; padding-top: 1em; border-top: 1px solid var(--rule); color: var(--muted); font-size: 0.9em; }
+  /* Keep the site header and footer as on the other pages, and the article as written. */
+  .site-header, .site-footer { font-family: Arial, Helvetica, sans-serif; }
+  .site-header { font-size: 16px; }
+  article h2 { font-weight: bold; }
+  article a { text-underline-offset: auto; }
+  article a:hover { color: var(--accent); }
+</style>
+</head>
+<body id="top">
+<header class="site-header"><nav class="nav wrap" aria-label="Main navigation">
+  <a class="site-name" href="../../index.html">Matis Brassard-Verrier</a>
+  <div class="nav-links"><a href="../../index.html#about">About</a><a href="../index.html">Projects</a><a href="../../blog/index.html">Blog</a></div>
+</nav></header>
+<main>
+<article>
+
+<h1>What a neural network learned from 250 years of classical music</h1>
+<p class="subtitle">I trained a variational autoencoder (VAE) to compress and reconstruct bars of classical
+music through a latent representation, which also lets it generate new music. Then, I looked inside
+to see what the model had learned about music theory and history on its own.</p>
+
+<!-- hero-four-stops:start -->
+<figure class="diagram walk hero">
+<svg viewBox="0 0 720 176" role="img" aria-label="Ten small piano rolls in a row: bars by Corelli, Mozart, Chopin and Debussy, with two bars decoded from points between each of them, changing gradually from one to the next.">
+  <defs>
+    <linearGradient id="hero-four-stops-line" gradientUnits="userSpaceOnUse" x1="32.4" x2="687.6" y1="0" y2="0">
+      <stop offset="0" style="stop-color: var(--accent)"/>
+      <stop offset="1" style="stop-color: var(--accent-2)"/>
+    </linearGradient>
+    <marker id="hero-four-stops-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" style="fill: var(--accent-2)"/>
+    </marker>
+  </defs>
+  <rect x="0.0" y="4" width="64.8" height="150" rx="5" class="soft"/>
+  <line x1="22.9" y1="7" x2="22.9" y2="151" class="beat"/>
+  <line x1="41.9" y1="7" x2="41.9" y2="151" class="beat"/>
+  <rect x="4.0" y="50.4" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="4.0" y="42.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="13.5" y="47.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="13.5" y="37.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="22.9" y="50.4" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="22.9" y="42.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="4.0" y="90.2" width="36.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="32.4" y="55.3" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="32.4" y="47.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="41.9" y="60.3" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="41.9" y="50.4" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="72.8" y="4" width="64.8" height="150" rx="5" class="soft"/>
+  <line x1="95.7" y1="7" x2="95.7" y2="151" class="beat"/>
+  <line x1="114.7" y1="7" x2="114.7" y2="151" class="beat"/>
+  <rect x="76.8" y="30.4" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="76.8" y="60.3" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="86.3" y="37.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="86.3" y="30.4" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="95.7" y="42.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="95.7" y="37.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="76.8" y="102.7" width="36.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="105.2" y="47.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="105.2" y="42.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="114.7" y="55.3" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="114.7" y="50.4" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="124.1" y="60.3" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="145.6" y="4" width="64.8" height="150" rx="5" class="soft"/>
+  <line x1="168.5" y1="7" x2="168.5" y2="151" class="beat"/>
+  <line x1="187.5" y1="7" x2="187.5" y2="151" class="beat"/>
+  <rect x="149.6" y="20.5" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="149.6" y="60.3" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="154.3" y="25.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="159.1" y="30.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="149.6" y="102.7" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="149.6" y="90.2" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="163.8" y="30.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="168.5" y="37.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="173.3" y="42.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="178.0" y="42.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="182.7" y="47.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="192.2" y="55.3" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="187.5" y="50.4" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="196.9" y="60.3" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="218.4" y="4" width="64.8" height="150" rx="5" class="soft"/>
+  <line x1="241.3" y1="7" x2="241.3" y2="151" class="beat"/>
+  <line x1="260.3" y1="7" x2="260.3" y2="151" class="beat"/>
+  <rect x="222.4" y="13.0" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="227.1" y="18.0" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="231.9" y="20.5" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="222.4" y="110.1" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="222.4" y="102.7" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="222.4" y="90.2" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="236.6" y="25.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="241.3" y="30.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="246.1" y="32.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="250.8" y="37.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="255.5" y="42.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="260.3" y="47.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="265.0" y="50.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="269.7" y="55.3" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="274.5" y="60.3" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="291.2" y="4" width="64.8" height="150" rx="5" class="soft"/>
+  <line x1="314.1" y1="7" x2="314.1" y2="151" class="beat"/>
+  <line x1="333.1" y1="7" x2="333.1" y2="151" class="beat"/>
+  <rect x="295.2" y="13.0" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="299.9" y="13.0" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="304.7" y="18.0" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="295.2" y="120.1" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="295.2" y="102.7" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="295.2" y="90.2" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="309.4" y="25.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="314.1" y="30.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="318.9" y="25.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="323.6" y="42.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="328.3" y="37.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="333.1" y="55.3" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="337.8" y="42.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="342.5" y="60.3" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="347.3" y="60.3" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="364.0" y="4" width="64.8" height="150" rx="5" class="soft"/>
+  <line x1="386.9" y1="7" x2="386.9" y2="151" class="beat"/>
+  <line x1="405.9" y1="7" x2="405.9" y2="151" class="beat"/>
+  <rect x="368.0" y="30.4" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="377.5" y="22.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="368.0" y="132.6" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="368.0" y="102.7" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="382.2" y="25.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="386.9" y="30.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="391.7" y="25.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="396.4" y="35.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="386.9" y="82.7" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="386.9" y="65.3" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="401.1" y="37.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="405.9" y="42.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="415.3" y="55.3" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="405.9" y="82.7" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="405.9" y="67.8" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="436.8" y="4" width="64.8" height="150" rx="5" class="soft"/>
+  <line x1="459.7" y1="7" x2="459.7" y2="151" class="beat"/>
+  <line x1="478.7" y1="7" x2="478.7" y2="151" class="beat"/>
+  <rect x="440.8" y="52.8" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="440.8" y="142.5" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="455.0" y="42.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="459.7" y="35.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="464.5" y="30.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="469.2" y="35.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="459.7" y="95.2" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="459.7" y="82.7" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="459.7" y="72.8" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="478.7" y="37.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="478.7" y="95.2" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="478.7" y="82.7" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="478.7" y="72.8" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="488.1" y="42.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="509.6" y="4" width="64.8" height="150" rx="5" class="soft"/>
+  <line x1="532.5" y1="7" x2="532.5" y2="151" class="beat"/>
+  <line x1="551.5" y1="7" x2="551.5" y2="151" class="beat"/>
+  <rect x="513.6" y="42.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="513.6" y="112.6" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="513.6" y="52.8" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="527.8" y="35.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="537.3" y="25.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="542.0" y="22.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="532.5" y="72.8" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="532.5" y="52.8" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="551.5" y="35.4" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="551.5" y="77.8" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="551.5" y="60.3" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="560.9" y="32.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="582.4" y="4" width="64.8" height="150" rx="5" class="soft"/>
+  <line x1="605.3" y1="7" x2="605.3" y2="151" class="beat"/>
+  <line x1="624.3" y1="7" x2="624.3" y2="151" class="beat"/>
+  <rect x="586.4" y="32.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 89%, var(--accent))"/>
+  <rect x="586.4" y="55.3" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 89%, var(--accent))"/>
+  <rect x="586.4" y="42.9" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 89%, var(--accent))"/>
+  <rect x="595.9" y="37.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 89%, var(--accent))"/>
+  <rect x="614.8" y="30.4" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 89%, var(--accent))"/>
+  <rect x="605.3" y="32.9" width="27.4" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 89%, var(--accent))"/>
+  <rect x="586.4" y="77.8" width="55.8" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 89%, var(--accent))"/>
+  <rect x="624.3" y="55.3" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 89%, var(--accent))"/>
+  <rect x="633.7" y="32.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 89%, var(--accent))"/>
+  <rect x="655.2" y="4" width="64.8" height="150" rx="5" class="soft"/>
+  <line x1="678.1" y1="7" x2="678.1" y2="151" class="beat"/>
+  <line x1="697.1" y1="7" x2="697.1" y2="151" class="beat"/>
+  <rect x="659.2" y="32.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="668.7" y="37.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="678.1" y="32.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="687.6" y="30.4" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="697.1" y="37.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="659.2" y="67.8" width="55.8" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="659.2" y="55.3" width="55.8" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="659.2" y="47.9" width="55.8" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="706.5" y="32.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <line x1="32.4" y1="168" x2="687.6" y2="168" stroke="url(#hero-four-stops-line)" stroke-width="2" marker-end="url(#hero-four-stops-head)"/>
+</svg>
+<div class="hero-stops"><span style="left: 0; color: color-mix(in oklab, var(--accent-2) 0%, var(--accent))">Corelli<small>1681</small></span><span style="left: 34.8%; transform: translateX(-50%); text-align: center; color: color-mix(in oklab, var(--accent-2) 33%, var(--accent))">Mozart<small>1783</small></span><span style="left: 65.2%; transform: translateX(-50%); text-align: center; color: color-mix(in oklab, var(--accent-2) 67%, var(--accent))">Chopin<small>1835</small></span><span style="right: 0; text-align: right; color: color-mix(in oklab, var(--accent-2) 100%, var(--accent))">Debussy<small>1905</small></span></div>
+<figcaption>From the Baroque era to modernism, by way of the Classical and Romantic periods, through bars generated by the model.</figcaption>
+<audio controls preload="none" src="media/walk_corelli_mozart_chopin_debussy.mp3"></audio>
+</figure>
+<!-- hero-four-stops:end -->
+
+<p>In 2023, for my master's thesis, I trained a <em>variational autoencoder</em> (VAE), a type of
+neural network, on tens of thousands of bars of classical music, from Corelli's trio
+sonatas of the 1680s to Medtner's piano tales of the 1920s. The model was never told who
+wrote what, when, or in which key. It was only shown single bars, written as notes on a grid, and
+asked to summarise each one and reconstruct it.</p>
+
+<p>The question that interested me was what happens <em>inside</em> such a model. To summarise and
+reconstruct music well, does it end up rediscovering musical concepts that musicians know, like
+the relationships between keys, or the traits that set composers and eras apart? Three years
+later, I dusted off the old code, expanded on it, and asked those questions again, this time with
+more statistically sound methods. This is what I found.</p>
+
+<nav class="toc" aria-label="Contents">
+<p>Contents</p>
+<ul>
+  <li><a href="#setting">The setting</a></li>
+  <li><a href="#latent-codes">1. What does a latent code remember about its bar?</a></li>
+  <li><a href="#latent-space">2. How is the latent space organised?</a></li>
+  <li><a href="#music-theory">3. Does music theory emerge in the latent space?</a></li>
+  <li><a href="#music-history">4. Does the model's picture of music history match ours?</a></li>
+  <li><a href="#limitations">Limitations and future work</a></li>
+  <li><a href="#looking-back">Looking back</a></li>
+</ul>
+</nav>
+
+<h2 id="setting">The setting</h2>
+
+<h3>The music</h3>
+<p>The music comes from the <a href="https://github.com/DCMLab/dcml_corpora">DCML corpora</a>,
+a collection of carefully annotated scores assembled by musicologists at EPFL. It contains twelve
+collections by eleven composers: Corelli, Mozart, Beethoven (both his piano sonatas and his string
+quartets), Schumann, Chopin, Liszt, Tchaikovsky, Dvořák, Grieg, Debussy and Medtner. Most of it is
+solo piano music.</p>
+
+<p>I cut every piece into single bars (measures), about 61,500 of them, and wrote each bar as a
+grid of sixteenth notes: which notes start at each moment, and how long they last. That's all the
+model sees. No composer, no date, no key, no chord names: just notes on a grid.</p>
+
+<h3>The model</h3>
+
+<figure class="diagram">
+<svg viewBox="0 0 680 210" role="img" aria-label="Diagram of an autoencoder: a bar of music goes through the encoder to a latent code, a point in the latent space; the decoder reconstructs the bar from the latent code alone.">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" class="ink-fill"/>
+    </marker>
+  </defs>
+  <!-- input bar -->
+  <rect x="10" y="50" width="110" height="80" rx="6" class="soft"/>
+  <rect x="20" y="62" width="30" height="6" class="ink-fill"/><rect x="20" y="88" width="45" height="6" class="ink-fill"/>
+  <rect x="55" y="74" width="25" height="6" class="ink-fill"/><rect x="70" y="100" width="40" height="6" class="ink-fill"/>
+  <rect x="85" y="62" width="25" height="6" class="ink-fill"/><rect x="20" y="112" width="60" height="6" class="ink-fill"/>
+  <text x="65" y="150" text-anchor="middle" font-size="13">a bar</text>
+  <text x="65" y="166" text-anchor="middle" font-size="11" class="muted">notes on a grid</text>
+  <line x1="122" y1="90" x2="150" y2="90" class="ink" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- encoder -->
+  <path d="M155,45 L245,70 L245,110 L155,135 z" class="soft"/>
+  <text x="200" y="95" text-anchor="middle" font-size="13">encoder</text>
+  <line x1="247" y1="90" x2="275" y2="90" class="ink" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- latent space -->
+  <rect x="280" y="25" width="120" height="130" rx="6" class="soft"/>
+  <circle cx="300" cy="55" r="3" class="muted"/><circle cx="378" cy="120" r="3" class="muted"/>
+  <circle cx="310" cy="125" r="3" class="muted"/><circle cx="385" cy="50" r="3" class="muted"/>
+  <circle cx="365" cy="78" r="3" class="muted"/><circle cx="296" cy="96" r="3" class="muted"/>
+  <circle cx="340" cy="85" r="5" class="accent"/>
+  <text x="340" y="174" text-anchor="middle" font-size="13">latent space</text>
+  <text x="340" y="190" text-anchor="middle" font-size="11" class="muted">the bar's latent code z: 512 numbers</text>
+  <line x1="402" y1="90" x2="430" y2="90" class="ink" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- decoder -->
+  <path d="M435,70 L525,45 L525,135 L435,110 z" class="soft"/>
+  <text x="480" y="95" text-anchor="middle" font-size="13">decoder</text>
+  <line x1="527" y1="90" x2="555" y2="90" class="ink" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- reconstruction -->
+  <rect x="560" y="50" width="110" height="80" rx="6" class="soft"/>
+  <rect x="570" y="62" width="30" height="6" class="ink-fill"/><rect x="570" y="88" width="45" height="6" class="ink-fill"/>
+  <rect x="605" y="74" width="25" height="6" class="ink-fill"/><rect x="620" y="100" width="40" height="6" class="ink-fill"/>
+  <rect x="635" y="62" width="25" height="6" class="ink-fill"/><rect x="570" y="112" width="45" height="6" class="ink-fill"/>
+  <text x="615" y="150" text-anchor="middle" font-size="13">the reconstructed bar</text>
+  <text x="615" y="166" text-anchor="middle" font-size="11" class="muted">from z alone</text>
+</svg>
+</figure>
+
+<p>The model is a <em>variational autoencoder</em> (VAE), specifically a design called
+<a href="https://arxiv.org/pdf/2008.07118">PianoTree VAE</a>, made for polyphonic music (music
+where several notes can sound at the same time, like chords on a piano, as opposed to a single
+melody line).</p>
+
+<p>Like every autoencoder, it has two halves. The <strong>encoder</strong> reads a bar and places it
+at a position in a 512-dimensional space, the <strong>latent space</strong>. The coordinates of that
+position form a 512-dimensional vector, the bar's <strong>latent code</strong>: a list of 512
+numbers that together encode the information about the bar that the model decided to keep. The
+<strong>decoder</strong> receives only this latent code and must reconstruct the bar from it, note
+by note. Since the latent code is all the decoder gets, the encoder has to pack it with whatever
+matters for the reconstruction.</p>
+
+<p>A plain autoencoder only cares about reconstruction, and it is free to arrange bars in the
+latent space however it likes. It usually ends up with an <em>irregular</em> latent space: similar
+bars can land far apart, and the regions between known bars decode to nonsense, because nothing
+asked the model to make them meaningful.</p>
+
+<p>A <em>variational</em> autoencoder adds a constraint: the model receives a
+<strong>penalty</strong> whenever its latent codes stray from a common reference, a round region
+centred at the origin of the latent space. This penalty keeps the latent codes packed together and
+pushes the model towards a <em>regular</em> latent space, one that is <em>continuous</em> (nearby
+positions decode to similar music) and <em>complete</em> (any position, even one where no real bar
+lives, decodes to something sensible).</p>
+
+<figure class="diagram">
+<svg viewBox="0 0 680 270" role="img" aria-label="Two sketches of a latent space. Left, a plain autoencoder: groups of bars scattered far apart with empty gaps between them. Right, a VAE: the same groups packed together inside a round reference region, with no gaps.">
+  <!-- left panel: irregular -->
+  <rect x="10" y="30" width="320" height="200" rx="8" class="soft"/>
+  <text x="170" y="20" text-anchor="middle" font-size="13">plain autoencoder: irregular</text>
+  <g class="accent">
+    <circle cx="60" cy="70" r="3"/><circle cx="68" cy="76" r="3"/><circle cx="56" cy="80" r="3"/><circle cx="64" cy="66" r="3"/>
+    <circle cx="270" cy="190" r="3"/><circle cx="278" cy="196" r="3"/><circle cx="266" cy="200" r="3"/><circle cx="282" cy="186" r="3"/>
+  </g>
+  <g class="ink-fill">
+    <circle cx="250" cy="60" r="3"/><circle cx="258" cy="66" r="3"/><circle cx="246" cy="70" r="3"/>
+    <circle cx="80" cy="190" r="3"/><circle cx="88" cy="182" r="3"/><circle cx="76" cy="198" r="3"/>
+  </g>
+  <g class="muted">
+    <circle cx="160" cy="120" r="3"/><circle cx="168" cy="126" r="3"/><circle cx="156" cy="128" r="3"/>
+  </g>
+  <path d="M68,82 Q120,170 262,188" class="accent-line" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="128" y="165" font-size="20" text-anchor="middle">?</text>
+  <text x="170" y="250" text-anchor="middle" font-size="11" class="muted">gaps between groups decode to nonsense</text>
+  <!-- right panel: regular -->
+  <rect x="350" y="30" width="320" height="200" rx="8" class="soft"/>
+  <text x="510" y="20" text-anchor="middle" font-size="13">variational autoencoder: regular</text>
+  <circle cx="510" cy="130" r="90" class="ink" stroke-width="1" stroke-dasharray="3 4"/>
+  <g class="accent">
+    <circle cx="462" cy="96" r="3"/><circle cx="472" cy="104" r="3"/><circle cx="458" cy="108" r="3"/><circle cx="476" cy="92" r="3"/>
+    <circle cx="540" cy="158" r="3"/><circle cx="550" cy="166" r="3"/><circle cx="536" cy="170" r="3"/><circle cx="554" cy="154" r="3"/>
+  </g>
+  <g class="ink-fill">
+    <circle cx="540" cy="96" r="3"/><circle cx="550" cy="104" r="3"/><circle cx="536" cy="108" r="3"/>
+    <circle cx="470" cy="160" r="3"/><circle cx="480" cy="168" r="3"/><circle cx="466" cy="172" r="3"/>
+  </g>
+  <g class="muted">
+    <circle cx="505" cy="128" r="3"/><circle cx="515" cy="134" r="3"/><circle cx="502" cy="138" r="3"/>
+  </g>
+  <path d="M470,104 Q500,140 545,162" class="accent-line" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="625" y="66" font-size="11" class="muted" text-anchor="middle">reference</text>
+  <text x="510" y="250" text-anchor="middle" font-size="11" class="muted">every point along the way decodes to plausible music</text>
+</svg>
+<figcaption>Each cluster is a group of similar bars.</figcaption>
+</figure>
+
+<p>Training a VAE means finding the encoder and decoder that minimise a <em>loss</em>, a single
+number that adds up the two goals for every bar <math><mi>x</mi></math>:</p>
+
+<math display="block">
+  <mrow>
+    <mi mathvariant="script">L</mi><mo>=</mo>
+    <munder><munder accentunder="true"><mtext>reconstruction error</mtext><mo>&#x23DF;</mo></munder><mtext>rebuild the bar well</mtext></munder>
+    <mo>+</mo><mi>&#x3B2;</mi><mo>&#xB7;</mo>
+    <munder><munder accentunder="true"><mtext>KL divergence</mtext><mo>&#x23DF;</mo></munder><mtext>keep the latent space regular</mtext></munder>
+  </mrow>
+</math>
+
+<ul class="terms">
+  <li>The <strong>reconstruction error</strong> measures how badly the decoder rebuilds the bar from
+  its latent code. In PianoTree VAE, it has two parts: how wrong the decoder is about the pitch of
+  each note, and how wrong it is about each note's duration.</li>
+  <li>The <strong>KL divergence</strong> (Kullback–Leibler divergence) is the penalty: it measures
+  how far the latent codes stray from the reference.</li>
+  <li><strong>β</strong> sets the weight of that penalty.</li>
+</ul>
+
+<p>I trained two versions of the model, identical except for β:</p>
+<ul>
+  <li>a <strong>compact</strong> model, with β = 0.1. The penalty weighs heavily, so its latent
+  codes must stay economical: it should keep the gist of each bar and let the decoder fill in the
+  details with typical music, in exchange for a tidy latent space where random positions decode to
+  plausible music.</li>
+  <li>a <strong>detailed</strong> model, with β = 0.01, a ten times lighter penalty. Its latent codes
+  can afford to hold more detail, so it should reconstruct bars more faithfully, at the cost of a
+  less tidy latent space.</li>
+</ul>
+
+<p>Each model took about five hours to train on a free GPU from Kaggle.</p>
+
+<p>Both models behave as expected. Here is how well they reconstruct bars from 60 pieces set aside
+from training:</p>
+
+<div class="table-wrap">
+<table class="scores">
+  <thead>
+    <tr><th></th><th>Compact</th><th>Detailed</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Notes reconstructed perfectly</td><td>80%</td><td>91%</td></tr>
+    <tr><td>Bars reconstructed perfectly</td><td>46%</td><td>68%</td></tr>
+    <tr><td>Notes reconstructed perfectly in very busy bars (over 32 notes)</td><td>58%</td><td>69%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>A note is right only if its start, pitch and length all match the original, and a bar only if
+every note is right. The detailed model is the more faithful of the two, and both struggle with
+very busy bars.</p>
+
+<!-- reconstruction:start -->
+<figure class="diagram reconstruction">
+<svg viewBox="0 0 720 196" role="img" aria-label="Three piano rolls of a bar from a Beethoven string quartet: the original (16 notes), the detailed model's reconstruction (16 of 16 notes right) and the compact model's (15 of 16 notes right).">
+  <text x="114.7" y="14" text-anchor="middle" font-size="13">Original</text>
+  <rect x="0.0" y="22" width="229.3" height="170" rx="5" class="soft"/>
+  <line x1="60.3" y1="25" x2="60.3" y2="189" class="beat"/>
+  <line x1="114.7" y1="25" x2="114.7" y2="189" class="beat"/>
+  <line x1="169.0" y1="25" x2="169.0" y2="189" class="beat"/>
+  <rect x="6.0" y="174.2" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="6.0" y="126.8" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="6.0" y="79.3" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="6.0" y="63.6" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="6.0" y="43.8" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="60.3" y="51.7" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="87.5" y="79.3" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="87.5" y="63.6" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="87.5" y="43.8" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="114.7" y="83.3" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="114.7" y="63.6" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="114.7" y="51.7" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="196.2" y="83.3" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="196.2" y="63.6" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="196.2" y="51.7" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="114.7" y="35.9" width="107.2" height="3.0" rx="1.5" class="note"/>
+  <text x="360.0" y="14" text-anchor="middle" font-size="13">Detailed model</text>
+  <rect x="245.3" y="22" width="229.3" height="170" rx="5" class="soft"/>
+  <line x1="305.7" y1="25" x2="305.7" y2="189" class="beat"/>
+  <line x1="360.0" y1="25" x2="360.0" y2="189" class="beat"/>
+  <line x1="414.3" y1="25" x2="414.3" y2="189" class="beat"/>
+  <rect x="251.3" y="174.2" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="251.3" y="126.8" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="251.3" y="79.3" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="251.3" y="63.6" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="251.3" y="43.8" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="305.7" y="51.7" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="332.8" y="79.3" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="332.8" y="63.6" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="332.8" y="43.8" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="360.0" y="83.3" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="360.0" y="63.6" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="360.0" y="51.7" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="441.5" y="83.3" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="441.5" y="63.6" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="441.5" y="51.7" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="360.0" y="35.9" width="107.2" height="3.0" rx="1.5" class="note"/>
+  <text x="605.3" y="14" text-anchor="middle" font-size="13">Compact model</text>
+  <rect x="490.7" y="22" width="229.3" height="170" rx="5" class="soft"/>
+  <line x1="551.0" y1="25" x2="551.0" y2="189" class="beat"/>
+  <line x1="605.3" y1="25" x2="605.3" y2="189" class="beat"/>
+  <line x1="659.7" y1="25" x2="659.7" y2="189" class="beat"/>
+  <rect x="496.7" y="174.2" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="496.7" y="126.8" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="496.7" y="79.3" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="496.7" y="63.6" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="496.7" y="43.8" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="551.0" y="51.7" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="578.2" y="79.3" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="578.2" y="63.6" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="578.2" y="43.8" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="605.3" y="83.3" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="605.3" y="63.6" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="605.3" y="51.7" width="52.8" height="3.0" rx="1.5" class="note"/>
+  <rect x="686.8" y="83.3" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="686.8" y="63.6" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="686.8" y="51.7" width="25.7" height="3.0" rx="1.5" class="note"/>
+  <rect x="605.3" y="35.9" width="107.2" height="3.0" rx="1.5" class="note-missing"/>
+</svg>
+<div class="reconstruction-scores"><span>16 notes</span><span>16 of 16 notes right</span><span>15 of 16 notes right</span></div>
+<div class="legend"><span><i class="key-right"></i>right</span><span><i class="key-wrong"></i>wrong or added</span><span><i class="key-missing"></i>missing</span></div>
+</figure>
+<!-- reconstruction:end -->
+
+<div class="listen">
+  <p>A typical bar from a Beethoven string quartet: the original, then the detailed model's
+  reconstruction, then the compact model's.</p>
+  <audio controls preload="none" src="media/playback_medium_original_detailed_compact.mp3"></audio>
+</div>
+
+<h3>How I looked inside the model</h3>
+<p>In my thesis, I mostly made colourful 2D pictures of the latent space and described what I saw
+in them: useful to build some intuition, but lacking scientific rigour. This time, I asked four
+questions, each answered in the sections below:</p>
+<ol>
+  <li>What does a latent code remember about its bar? (<a href="#latent-codes">section 1</a>)</li>
+  <li>How is the latent space organised? (<a href="#latent-space">section 2</a>)</li>
+  <li>Do relationships from music theory, such as related keys, emerge in it? (<a href="#music-theory">section 3</a>)</li>
+  <li>Does its picture of music history match ours? (<a href="#music-history">section 4</a>)</li>
+</ol>
+<p>I held every answer to three rules:</p>
+<ul>
+  <li><strong>Test on unseen music.</strong> The model is tested on 60 pieces it never saw during
+  training, and every measurement made on top of it is judged on pieces it wasn't built from.</li>
+  <li><strong>Always compare with a baseline.</strong> Every result is compared with the
+  <em>same model with random, untrained weights</em>, and with <em>simple measurements</em> anyone
+  could compute (how high the notes are, how many there are, how dissonant they sound). If the
+  trained model can't beat these, it hasn't really learned anything.</li>
+  <li><strong>Keep the tests simple.</strong> The simpler the test, the more a positive result says
+  about the latent space rather than about the test.</li>
+</ul>
+<p>And every finding comes with something to hear: the model's output, played on a sampled grand
+piano.</p>
+
+<h2 id="latent-codes">1. What does a latent code remember about its bar?</h2>
+
+<!-- question:start -->
+<figure class="diagram">
+<svg viewBox="0 0 680 200" role="img" aria-label="A bar of music is squeezed into its latent code. What did the latent code keep: pitch, rhythm, texture, chords, key?">
+  <rect x="40" y="30" width="210" height="130" rx="8" class="soft"/>
+  <rect x="50.0" y="76.0" width="33.1" height="4" rx="1.5" class="ink-fill"/>
+  <rect x="85.6" y="66.5" width="9.4" height="4" rx="1.5" class="ink-fill"/>
+  <rect x="97.5" y="59.4" width="45.0" height="4" rx="1.5" class="ink-fill"/>
+  <rect x="145.0" y="64.1" width="21.2" height="4" rx="1.5" class="ink-fill"/>
+  <rect x="168.8" y="71.2" width="21.2" height="4" rx="1.5" class="ink-fill"/>
+  <rect x="192.5" y="47.5" width="45.0" height="4" rx="1.5" class="ink-fill"/>
+  <rect x="50.0" y="133.0" width="92.5" height="4" rx="1.5" class="ink-fill"/>
+  <rect x="50.0" y="116.4" width="92.5" height="4" rx="1.5" class="ink-fill"/>
+  <rect x="50.0" y="95.0" width="92.5" height="4" rx="1.5" class="ink-fill"/>
+  <rect x="145.0" y="144.9" width="92.5" height="4" rx="1.5" class="ink-fill"/>
+  <rect x="145.0" y="121.1" width="92.5" height="4" rx="1.5" class="ink-fill"/>
+  <rect x="145.0" y="106.9" width="92.5" height="4" rx="1.5" class="ink-fill"/>
+  <text x="145.0" y="190" text-anchor="middle" font-size="13">a bar</text>
+  <path d="M258,34 L342,52 M258,156 L342,136" class="ink" stroke-width="1.2" opacity="0.5"/>
+  <rect x="350" y="50" width="24" height="7" rx="1.5" class="accent" opacity="0.85"/>
+  <rect x="350" y="59" width="24" height="7" rx="1.5" class="accent" opacity="0.3"/>
+  <rect x="350" y="68" width="24" height="7" rx="1.5" class="accent" opacity="0.6"/>
+  <rect x="350" y="77" width="24" height="7" rx="1.5" class="accent" opacity="0.15"/>
+  <rect x="350" y="86" width="24" height="7" rx="1.5" class="accent" opacity="0.95"/>
+  <rect x="350" y="95" width="24" height="7" rx="1.5" class="accent" opacity="0.45"/>
+  <rect x="350" y="104" width="24" height="7" rx="1.5" class="accent" opacity="0.7"/>
+  <rect x="350" y="113" width="24" height="7" rx="1.5" class="accent" opacity="0.25"/>
+  <rect x="350" y="122" width="24" height="7" rx="1.5" class="accent" opacity="0.5"/>
+  <rect x="350" y="131" width="24" height="7" rx="1.5" class="accent" opacity="0.9"/>
+  <text x="362" y="190" text-anchor="middle" font-size="13">latent code</text>
+  <path d="M380,94.0 C430,94.0 440,34 486,34" class="ink" stroke-width="1.2" stroke-dasharray="2 3" opacity="0.5"/>
+  <text x="494" y="38" font-size="15" class="muted">pitch?</text>
+  <path d="M380,94.0 C430,94.0 440,65 486,65" class="ink" stroke-width="1.2" stroke-dasharray="2 3" opacity="0.5"/>
+  <text x="494" y="69" font-size="15" class="muted">rhythm?</text>
+  <path d="M380,94.0 C430,94.0 440,96 486,96" class="ink" stroke-width="1.2" stroke-dasharray="2 3" opacity="0.5"/>
+  <text x="494" y="100" font-size="15" class="muted">texture?</text>
+  <path d="M380,94.0 C430,94.0 440,127 486,127" class="ink" stroke-width="1.2" stroke-dasharray="2 3" opacity="0.5"/>
+  <text x="494" y="131" font-size="15" class="muted">chords?</text>
+  <path d="M380,94.0 C430,94.0 440,158 486,158" class="ink" stroke-width="1.2" stroke-dasharray="2 3" opacity="0.5"/>
+  <text x="494" y="162" font-size="15" class="muted">key?</text>
+</svg>
+</figure>
+<!-- question:end -->
+
+<p><strong>Quick answer:</strong> above all what is played (where the notes are, how many, how long
+they last and, partly, the bar's texture), but not what it means, like the key or the chords.</p>
+
+<p>To find out what a latent code holds, I use a deliberately simple test: a linear model that
+tries to predict a property of the bar from its latent code. That means training a <em>classifier</em> when
+the answer is a category (major or minor?) and a <em>regression model</em> when it's a number (how high
+is the bar?). If such a simple model succeeds, the information is in the latent code in plain
+sight. I tested twelve properties, in three groups: what the bar looks like on a piano roll, its
+texture, and its musical context. Each linear model is trained on the training pieces and scored
+on the held-out ones. A score of 1 is perfect. For numbers, 0 means no better than always guessing
+the average; for categories, the score of pure guessing is given in brackets.</p>
+
+<div class="table-wrap">
+<table class="scores">
+  <thead>
+    <tr><th>Property</th><th>Compact</th><th>Detailed</th><th>Untrained</th></tr>
+  </thead>
+  <tbody>
+    <tr class="group"><th colspan="4">What the bar looks like</th></tr>
+    <tr><td>Register (average pitch)</td><td>0.95</td><td>0.97</td><td>0.75</td></tr>
+    <tr><td>Number of notes</td><td>0.96</td><td>0.98</td><td>0.99</td></tr>
+    <tr><td>Notes played together</td><td>0.94</td><td>0.97</td><td>0.75</td></tr>
+    <tr><td>Note length</td><td>0.92</td><td>0.96</td><td>0.76</td></tr>
+    <tr><td>Notes starting off the beat</td><td>0.92</td><td>0.97</td><td>0.85</td></tr>
+    <tr><td>Meter (length of the bar)</td><td>0.96</td><td>0.96</td><td>0.88</td></tr>
+    <tr class="group"><th colspan="4">Texture</th></tr>
+    <tr><td>Melodic leaps</td><td>0.65</td><td>0.70</td><td>0.26</td></tr>
+    <tr><td>Dissonance</td><td>0.43</td><td>0.22</td><td>0.00</td></tr>
+    <tr><td>Variety of note names</td><td>0.76</td><td>0.69</td><td>0.35</td></tr>
+    <tr class="group"><th colspan="4">Musical context</th></tr>
+    <tr><td>Major or minor key (guessing: 0.50)</td><td>0.56</td><td>0.55</td><td>0.54</td></tr>
+    <tr><td>Which of the twelve keys (guessing: 0.08)</td><td>0.29</td><td>0.23</td><td>0.24</td></tr>
+    <tr><td>Opening chord major or minor (guessing: 0.50)</td><td>0.52</td><td>0.51</td><td>0.50</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>What the latent code holds is, above all, a faithful picture of the notes: everything about
+what the bar looks like can be read almost perfectly from both trained models. But the untrained
+control shows that part of it comes for free. Even with random weights, the architecture produces
+latent codes from which the number of notes can be read perfectly, and the meter and the offbeat
+notes very well. Training matters most for <em>where</em> the notes are
+and for the bar's texture: how much the melody leaps, how dissonant the harmony is,
+and how many different note names it uses. Note also that the detailed model, although it stores
+more, makes dissonance <em>harder</em> to read than the compact one: the information is there,
+since it reconstructs the notes better, but in a more tangled form that a simple linear model
+can't pick out as easily. It's a hint of the trade-off in the next section.</p>
+
+<p>What the latent code doesn't make readable is musical context. Whether the piece is in a major or a
+minor key, which of the twelve keys, which chord a bar opens on: a single bar's latent code reveals these
+barely better than a guess, and when it does, the untrained model does almost as well. The model
+stores <em>what is played</em>, not <em>what it means</em>.</p>
+
+<h2 id="latent-space">2. How is the latent space organised?</h2>
+
+<p><strong>Quick answer:</strong> smoothly along paths between real bars, but with holes elsewhere,
+and with simple directions for pitch and busyness, but not for dissonance or transposition.</p>
+
+<p>A well-organised latent space should pass two tests. Positions between real bars should decode
+to something that still sounds like music, and moving in a given direction should change the music
+in a predictable way. I checked both.</p>
+
+<h3>What lives between the real bars?</h3>
+
+<!-- sampling:start -->
+<figure class="diagram">
+<svg viewBox="0 0 680 200" role="img" aria-label="Random positions are picked in the latent space, among the positions of real bars, and the decoder turns each into a new bar of music.">
+  <defs>
+    <marker id="sampling-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" class="ink-fill"/>
+    </marker>
+  </defs>
+  <rect x="20" y="20" width="200" height="150" rx="8" class="soft"/>
+  <circle cx="120" cy="95" r="62" class="ink" stroke-width="1" stroke-dasharray="3 4" opacity="0.5"/>
+  <circle cx="70" cy="62" r="3" class="muted"/>
+  <circle cx="95" cy="128" r="3" class="muted"/>
+  <circle cx="150" cy="52" r="3" class="muted"/>
+  <circle cx="172" cy="140" r="3" class="muted"/>
+  <circle cx="120" cy="78" r="3" class="muted"/>
+  <circle cx="88" cy="98" r="3" class="muted"/>
+  <circle cx="160" cy="110" r="3" class="muted"/>
+  <circle cx="132" cy="150" r="3" class="muted"/>
+  <circle cx="68" cy="120" r="3" class="muted"/>
+  <circle cx="186" cy="84" r="3" class="muted"/>
+  <circle cx="112" cy="48" r="3" class="muted"/>
+  <circle cx="142" cy="92" r="3" class="muted"/>
+  <circle cx="102" cy="64" r="9" class="accent" opacity="0.18"/>
+  <circle cx="102" cy="64" r="4.5" class="accent"/>
+  <circle cx="156" cy="74" r="9" class="accent" opacity="0.18"/>
+  <circle cx="156" cy="74" r="4.5" class="accent"/>
+  <circle cx="118" cy="132" r="9" class="accent" opacity="0.18"/>
+  <circle cx="118" cy="132" r="4.5" class="accent"/>
+  <text x="120" y="190" text-anchor="middle" font-size="13">latent space</text>
+  <path d="M108,64 C192,64 250,95 296,95" class="accent-line" stroke-width="1.3"/>
+  <path d="M162,74 C246,74 250,95 296,95" class="accent-line" stroke-width="1.3"/>
+  <path d="M124,132 C208,132 250,95 296,95" class="accent-line" stroke-width="1.3"/>
+  <path d="M300,75 L370,55 L370,135 L300,115 z" class="soft"/>
+  <text x="335" y="100" text-anchor="middle" font-size="13">decoder</text>
+  <path d="M372,95 C400,95 408,53.0 434,53.0" class="ink" stroke-width="1.2" marker-end="url(#sampling-arrow)"/>
+  <rect x="440" y="32" width="230" height="42" rx="5" class="soft"/>
+  <rect x="446.0" y="55.2" width="25.8" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="446.0" y="53.4" width="25.8" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="473.2" y="50.8" width="25.8" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="446.0" y="47.3" width="53.0" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="500.5" y="56.9" width="25.8" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="527.8" y="61.3" width="25.8" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="527.8" y="57.8" width="25.8" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="500.5" y="53.4" width="53.0" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="500.5" y="40.4" width="53.0" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="446.0" y="36.9" width="107.5" height="1.8" rx="1" class="ink-fill"/>
+  <path d="M372,95 C400,95 408,102.0 434,102.0" class="ink" stroke-width="1.2" marker-end="url(#sampling-arrow)"/>
+  <rect x="440" y="81" width="230" height="42" rx="5" class="soft"/>
+  <rect x="446.0" y="117.3" width="12.1" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="459.6" y="99.8" width="12.1" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="446.0" y="98.1" width="25.8" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="473.2" y="114.6" width="25.8" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="446.0" y="96.3" width="53.0" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="473.2" y="96.3" width="25.8" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="486.9" y="96.3" width="12.1" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="500.5" y="114.6" width="25.8" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="500.5" y="96.3" width="25.8" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="473.2" y="93.7" width="53.0" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="527.8" y="117.3" width="25.8" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="527.8" y="93.7" width="25.8" height="1.8" rx="1" class="ink-fill"/>
+  <path d="M372,95 C400,95 408,151.0 434,151.0" class="ink" stroke-width="1.2" marker-end="url(#sampling-arrow)"/>
+  <rect x="440" y="130" width="230" height="42" rx="5" class="soft"/>
+  <rect x="446.0" y="143.6" width="25.8" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="473.2" y="147.9" width="25.8" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="500.5" y="143.6" width="25.8" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="527.8" y="143.6" width="25.8" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="555.0" y="147.9" width="53.0" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="582.2" y="141.0" width="25.8" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="609.5" y="141.0" width="25.8" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="446.0" y="164.5" width="216.5" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="446.0" y="154.1" width="216.5" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="636.8" y="141.0" width="25.8" height="1.8" rx="1" class="ink-fill"/>
+  <rect x="555.0" y="137.5" width="107.5" height="1.8" rx="1" class="ink-fill"/>
+  <text x="555.0" y="190" text-anchor="middle" font-size="13">new bars</text>
+</svg>
+</figure>
+<!-- sampling:end -->
+
+<p>Since every position in the latent space can be decoded, we can ask what lives between the real
+bars. I picked 1,000 random positions in each model's latent space and decoded them.</p>
+
+<div class="listen">
+  <p>Four bars decoded from random points in the <strong>compact</strong> model's latent space.</p>
+  <audio controls preload="none" src="media/random_bars_compact.mp3"></audio>
+  <p style="margin-top:12px">And four from the <strong>detailed</strong> model's latent space.</p>
+  <audio controls preload="none" src="media/random_bars_detailed.mp3"></audio>
+</div>
+
+<p>To see how close they come to real music, I compared a few simple properties of these random
+bars with those of real bars from the held-out pieces, and trained a classifier to tell random bars
+from real ones using the same properties.</p>
+
+<div class="table-wrap">
+<table class="scores">
+  <thead>
+    <tr><th></th><th>Real bars</th><th>Compact</th><th>Detailed</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Notes per bar (median)</td><td>14</td><td>12</td><td>13</td></tr>
+    <tr><td>Notes played together (average)</td><td>2.27</td><td>2.27</td><td>2.30</td></tr>
+    <tr><td>Dissonance (share of tense note pairs)</td><td>0.15</td><td>0.15</td><td>0.31</td></tr>
+    <tr><td>Time with sound in the bar</td><td>97%</td><td>73%</td><td>74%</td></tr>
+    <tr><td>Spotted as fake by the classifier</td><td>&ndash;</td><td>83%</td><td>91%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>The compact model's random bars match real music on <em>what</em> is played: as many notes
+played together, the same register, and exactly as much dissonance. What gives them away is
+<em>when nothing</em> is played. Real bars almost never fall silent, while random bars often leave
+gaps of a beat or two, and that alone lets the classifier spot them 83% of the time. The detailed
+model's random bars have the same gaps, are twice as dissonant as real music, and are even easier
+to spot (91%).</p>
+
+<p>Positions on a path between two real bars do much better. These paths are smooth: the music
+changes gradually, without gaps, and halfway between two real bars of the compact model, the
+classifier can't reliably tell the decoded bar from real music (52%, where 50% is a coin flip).</p>
+
+<p>This is my favourite experiment: pick two real bars from different eras, and let the model walk
+from one to the other, making up music nobody ever wrote along the way. The walk at the top of this
+article does it three times in a row, all the way from Corelli to Debussy. Here is a single leg:
+two minuets, Mozart's and Debussy's, written more than a century apart.</p>
+
+<!-- hero:start -->
+<figure class="diagram walk">
+<svg viewBox="0 0 720 176" role="img" aria-label="Eight small piano rolls in a row: a bar of Mozart's Menuetto on the left, a bar of Debussy's Menuet on the right, and six bars decoded from points between them, changing gradually from one to the other.">
+  <defs>
+    <linearGradient id="hero-line" gradientUnits="userSpaceOnUse" x1="41.5" x2="678.5" y1="0" y2="0">
+      <stop offset="0" style="stop-color: var(--accent)"/>
+      <stop offset="1" style="stop-color: var(--accent-2)"/>
+    </linearGradient>
+    <marker id="hero-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" style="fill: var(--accent-2)"/>
+    </marker>
+  </defs>
+  <rect x="0.0" y="4" width="83.0" height="150" rx="5" class="soft"/>
+  <line x1="29.0" y1="7" x2="29.0" y2="151" class="beat"/>
+  <line x1="54.0" y1="7" x2="54.0" y2="151" class="beat"/>
+  <rect x="4.0" y="14.5" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="10.2" y="20.9" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="16.5" y="24.1" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="4.0" y="140.3" width="24.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="4.0" y="130.6" width="24.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="4.0" y="114.5" width="24.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="22.8" y="30.6" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="29.0" y="37.0" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="35.2" y="40.3" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="41.5" y="46.7" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="47.8" y="53.2" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="54.0" y="59.6" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="60.2" y="62.9" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="66.5" y="69.3" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="72.8" y="75.8" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="91.0" y="4" width="83.0" height="150" rx="5" class="soft"/>
+  <line x1="120.0" y1="7" x2="120.0" y2="151" class="beat"/>
+  <line x1="145.0" y1="7" x2="145.0" y2="151" class="beat"/>
+  <rect x="95.0" y="14.5" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 14%, var(--accent))"/>
+  <rect x="101.2" y="20.9" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 14%, var(--accent))"/>
+  <rect x="107.5" y="24.1" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 14%, var(--accent))"/>
+  <rect x="95.0" y="130.6" width="24.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 14%, var(--accent))"/>
+  <rect x="95.0" y="124.2" width="24.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 14%, var(--accent))"/>
+  <rect x="95.0" y="101.6" width="24.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 14%, var(--accent))"/>
+  <rect x="113.8" y="30.6" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 14%, var(--accent))"/>
+  <rect x="120.0" y="37.0" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 14%, var(--accent))"/>
+  <rect x="126.2" y="40.3" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 14%, var(--accent))"/>
+  <rect x="132.5" y="46.7" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 14%, var(--accent))"/>
+  <rect x="138.8" y="53.2" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 14%, var(--accent))"/>
+  <rect x="145.0" y="59.6" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 14%, var(--accent))"/>
+  <rect x="151.2" y="62.9" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 14%, var(--accent))"/>
+  <rect x="157.5" y="69.3" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 14%, var(--accent))"/>
+  <rect x="163.8" y="75.8" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 14%, var(--accent))"/>
+  <rect x="182.0" y="4" width="83.0" height="150" rx="5" class="soft"/>
+  <line x1="211.0" y1="7" x2="211.0" y2="151" class="beat"/>
+  <line x1="236.0" y1="7" x2="236.0" y2="151" class="beat"/>
+  <rect x="186.0" y="14.5" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 29%, var(--accent))"/>
+  <rect x="192.2" y="20.9" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 29%, var(--accent))"/>
+  <rect x="198.5" y="24.1" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 29%, var(--accent))"/>
+  <rect x="204.8" y="30.6" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 29%, var(--accent))"/>
+  <rect x="211.0" y="37.0" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 29%, var(--accent))"/>
+  <rect x="217.2" y="40.3" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 29%, var(--accent))"/>
+  <rect x="223.5" y="37.0" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 29%, var(--accent))"/>
+  <rect x="229.8" y="46.7" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 29%, var(--accent))"/>
+  <rect x="236.0" y="46.7" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 29%, var(--accent))"/>
+  <rect x="242.2" y="53.2" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 29%, var(--accent))"/>
+  <rect x="248.5" y="59.6" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 29%, var(--accent))"/>
+  <rect x="186.0" y="124.2" width="74.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 29%, var(--accent))"/>
+  <rect x="186.0" y="114.5" width="74.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 29%, var(--accent))"/>
+  <rect x="186.0" y="91.9" width="74.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 29%, var(--accent))"/>
+  <rect x="254.8" y="62.9" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 29%, var(--accent))"/>
+  <rect x="273.0" y="4" width="83.0" height="150" rx="5" class="soft"/>
+  <line x1="302.0" y1="7" x2="302.0" y2="151" class="beat"/>
+  <line x1="327.0" y1="7" x2="327.0" y2="151" class="beat"/>
+  <rect x="277.0" y="24.1" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 43%, var(--accent))"/>
+  <rect x="283.2" y="24.1" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 43%, var(--accent))"/>
+  <rect x="289.5" y="30.6" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 43%, var(--accent))"/>
+  <rect x="295.8" y="30.6" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 43%, var(--accent))"/>
+  <rect x="302.0" y="24.1" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 43%, var(--accent))"/>
+  <rect x="308.2" y="37.0" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 43%, var(--accent))"/>
+  <rect x="314.5" y="40.3" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 43%, var(--accent))"/>
+  <rect x="320.8" y="46.7" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 43%, var(--accent))"/>
+  <rect x="327.0" y="46.7" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 43%, var(--accent))"/>
+  <rect x="333.2" y="53.2" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 43%, var(--accent))"/>
+  <rect x="339.5" y="59.6" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 43%, var(--accent))"/>
+  <rect x="277.0" y="114.5" width="74.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 43%, var(--accent))"/>
+  <rect x="277.0" y="98.4" width="74.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 43%, var(--accent))"/>
+  <rect x="277.0" y="75.8" width="74.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 43%, var(--accent))"/>
+  <rect x="345.8" y="62.9" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 43%, var(--accent))"/>
+  <rect x="364.0" y="4" width="83.0" height="150" rx="5" class="soft"/>
+  <line x1="393.0" y1="7" x2="393.0" y2="151" class="beat"/>
+  <line x1="418.0" y1="7" x2="418.0" y2="151" class="beat"/>
+  <rect x="368.0" y="24.1" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 57%, var(--accent))"/>
+  <rect x="374.2" y="24.1" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 57%, var(--accent))"/>
+  <rect x="380.5" y="30.6" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 57%, var(--accent))"/>
+  <rect x="386.8" y="30.6" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 57%, var(--accent))"/>
+  <rect x="393.0" y="24.1" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 57%, var(--accent))"/>
+  <rect x="399.2" y="37.0" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 57%, var(--accent))"/>
+  <rect x="405.5" y="37.0" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 57%, var(--accent))"/>
+  <rect x="411.8" y="40.3" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 57%, var(--accent))"/>
+  <rect x="418.0" y="46.7" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 57%, var(--accent))"/>
+  <rect x="424.2" y="46.7" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 57%, var(--accent))"/>
+  <rect x="430.5" y="53.2" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 57%, var(--accent))"/>
+  <rect x="368.0" y="108.0" width="74.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 57%, var(--accent))"/>
+  <rect x="368.0" y="85.5" width="74.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 57%, var(--accent))"/>
+  <rect x="368.0" y="69.3" width="74.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 57%, var(--accent))"/>
+  <rect x="455.0" y="4" width="83.0" height="150" rx="5" class="soft"/>
+  <line x1="484.0" y1="7" x2="484.0" y2="151" class="beat"/>
+  <line x1="509.0" y1="7" x2="509.0" y2="151" class="beat"/>
+  <rect x="459.0" y="30.6" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 71%, var(--accent))"/>
+  <rect x="465.2" y="33.8" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 71%, var(--accent))"/>
+  <rect x="471.5" y="30.6" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 71%, var(--accent))"/>
+  <rect x="484.0" y="37.0" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 71%, var(--accent))"/>
+  <rect x="490.2" y="37.0" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 71%, var(--accent))"/>
+  <rect x="496.5" y="40.3" width="5.2" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 71%, var(--accent))"/>
+  <rect x="509.0" y="46.7" width="11.5" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 71%, var(--accent))"/>
+  <rect x="459.0" y="98.4" width="74.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 71%, var(--accent))"/>
+  <rect x="459.0" y="79.0" width="74.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 71%, var(--accent))"/>
+  <rect x="459.0" y="59.6" width="74.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 71%, var(--accent))"/>
+  <rect x="521.5" y="53.2" width="11.5" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 71%, var(--accent))"/>
+  <rect x="546.0" y="4" width="83.0" height="150" rx="5" class="soft"/>
+  <line x1="575.0" y1="7" x2="575.0" y2="151" class="beat"/>
+  <line x1="600.0" y1="7" x2="600.0" y2="151" class="beat"/>
+  <rect x="550.0" y="30.6" width="11.5" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 86%, var(--accent))"/>
+  <rect x="562.5" y="46.7" width="11.5" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 86%, var(--accent))"/>
+  <rect x="575.0" y="40.3" width="11.5" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 86%, var(--accent))"/>
+  <rect x="587.5" y="37.0" width="11.5" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 86%, var(--accent))"/>
+  <rect x="600.0" y="46.7" width="11.5" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 86%, var(--accent))"/>
+  <rect x="550.0" y="85.5" width="74.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 86%, var(--accent))"/>
+  <rect x="550.0" y="75.8" width="74.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 86%, var(--accent))"/>
+  <rect x="550.0" y="59.6" width="74.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 86%, var(--accent))"/>
+  <rect x="612.5" y="40.3" width="11.5" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 86%, var(--accent))"/>
+  <rect x="637.0" y="4" width="83.0" height="150" rx="5" class="soft"/>
+  <line x1="666.0" y1="7" x2="666.0" y2="151" class="beat"/>
+  <line x1="691.0" y1="7" x2="691.0" y2="151" class="beat"/>
+  <rect x="641.0" y="40.3" width="11.5" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="653.5" y="46.7" width="11.5" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="666.0" y="40.3" width="11.5" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="678.5" y="37.0" width="11.5" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="691.0" y="46.7" width="11.5" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="641.0" y="85.5" width="74.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="641.0" y="69.3" width="74.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="641.0" y="59.6" width="74.0" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="703.5" y="40.3" width="11.5" height="2.6" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <line x1="41.5" y1="168" x2="678.5" y2="168" stroke="url(#hero-line)" stroke-width="2" marker-end="url(#hero-head)"/>
+</svg>
+<div class="hero-stops"><span style="left: 0; color: color-mix(in oklab, var(--accent-2) 0%, var(--accent))">Mozart<small>1783</small></span><span style="right: 0; text-align: right; color: color-mix(in oklab, var(--accent-2) 100%, var(--accent))">Debussy<small>1905</small></span></div>
+<figcaption>From Mozart's <em>Menuetto</em> to Debussy's <em>Menuet</em> in eight steps through the compact model's latent space.</figcaption>
+<audio controls preload="none" src="media/path_mozart_menuetto_to_debussy_menuet.mp3"></audio>
+</figure>
+<!-- hero:end -->
+
+<p>So the decoder isn't the problem: real music simply doesn't fill the whole latent space. Random
+positions often land in the empty regions in between, called <em>holes</em>, where the decoder has
+to improvise. A heavier penalty (a higher β) should shrink the holes, but it also leaves less room for detail in
+each latent code.</p>
+
+<p>That's the central trade-off of the whole project, and our two models sit on either side of it.
+The detailed model, with its lighter penalty, <em>is better at reconstructing real music</em>, but
+it has bigger holes. The compact model, forced to economise, keeps its latent space
+<em>tidier</em>, and its random bars come closer to real music. The two models will keep
+disagreeing in interesting ways.</p>
+
+<h3>Are there directions with a musical meaning?</h3>
+
+<!-- directions:start -->
+<figure class="diagram">
+<svg viewBox="0 0 680 200" role="img" aria-label="In the latent space, an arrow goes from the average position of low bars to that of high bars. A bar moved along this arrow is decoded into the same kind of bar, played higher and higher.">
+  <defs>
+    <marker id="directions-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" class="ink-fill"/>
+    </marker>
+  </defs>
+  <rect x="20" y="20" width="200" height="150" rx="8" class="soft"/>
+  <circle cx="120" cy="95" r="62" class="ink" stroke-width="1" stroke-dasharray="3 4" opacity="0.5"/>
+  <circle cx="52" cy="142" r="3" class="muted"/>
+  <circle cx="66" cy="152" r="3" class="muted"/>
+  <circle cx="60" cy="128" r="3" class="muted"/>
+  <circle cx="170" cy="46" r="3" class="muted"/>
+  <circle cx="184" cy="58" r="3" class="muted"/>
+  <circle cx="176" cy="34" r="3" class="muted"/>
+  <line x1="73" y1="137" x2="165" y2="58" class="ink" stroke-width="2" marker-end="url(#directions-arrow)"/>
+  <text x="102" y="80" font-size="13" font-weight="600" transform="rotate(-40 102 80)">higher</text>
+  <circle cx="95" cy="156" r="4.5" class="accent"/>
+  <circle cx="130" cy="126" r="4.5" class="accent"/>
+  <circle cx="165" cy="96" r="4.5" class="accent"/>
+  <line x1="226" y1="95" x2="294" y2="95" class="ink" stroke-width="1.2" marker-end="url(#directions-arrow)"/>
+  <text x="120" y="190" text-anchor="middle" font-size="13">latent space</text>
+  <path d="M300,75 L370,55 L370,135 L300,115 z" class="soft"/>
+  <text x="335" y="100" text-anchor="middle" font-size="13">decoder</text>
+  <line x1="372" y1="95" x2="414" y2="95" class="ink" stroke-width="1.2" marker-end="url(#directions-arrow)"/>
+  <rect x="420" y="20" width="78" height="150" rx="5" class="soft"/>
+  <rect x="424.0" y="150.6" width="16.5" height="3.2" rx="1" class="ink-fill"/>
+  <rect x="441.5" y="135.3" width="7.8" height="3.2" rx="1" class="ink-fill"/>
+  <rect x="450.2" y="123.8" width="7.8" height="3.2" rx="1" class="ink-fill"/>
+  <rect x="459.0" y="104.6" width="25.2" height="3.2" rx="1" class="ink-fill"/>
+  <rect x="485.2" y="123.8" width="7.8" height="3.2" rx="1" class="ink-fill"/>
+  <rect x="507" y="20" width="78" height="150" rx="5" class="soft"/>
+  <rect x="511.0" y="116.1" width="16.5" height="3.2" rx="1" class="ink-fill"/>
+  <rect x="528.5" y="100.8" width="7.8" height="3.2" rx="1" class="ink-fill"/>
+  <rect x="537.2" y="89.2" width="7.8" height="3.2" rx="1" class="ink-fill"/>
+  <rect x="546.0" y="70.1" width="25.2" height="3.2" rx="1" class="ink-fill"/>
+  <rect x="572.2" y="89.2" width="7.8" height="3.2" rx="1" class="ink-fill"/>
+  <rect x="594" y="20" width="78" height="150" rx="5" class="soft"/>
+  <rect x="598.0" y="81.6" width="16.5" height="3.2" rx="1" class="ink-fill"/>
+  <rect x="615.5" y="66.2" width="7.8" height="3.2" rx="1" class="ink-fill"/>
+  <rect x="624.2" y="54.7" width="7.8" height="3.2" rx="1" class="ink-fill"/>
+  <rect x="633.0" y="35.5" width="25.2" height="3.2" rx="1" class="ink-fill"/>
+  <rect x="659.2" y="54.7" width="7.8" height="3.2" rx="1" class="ink-fill"/>
+  <text x="546.0" y="190" text-anchor="middle" font-size="13">the same bar, higher and higher</text>
+</svg>
+</figure>
+<!-- directions:end -->
+
+<p>If the latent space is well organised, some directions in it should correspond to musical
+qualities. I looked for three, in the compact model: pitch (how high the notes are), busyness (how
+many notes a bar has) and dissonance (how many of the notes played together sound tense). To find
+the direction of "higher", I took the average latent code of the highest bars and the average
+latent code of the lowest ones, and drew an arrow between them. I did the same for the other two
+qualities, then moved bars along each arrow and decoded them.</p>
+
+<p>The results show that "higher" and "busier" are real knobs:</p>
+
+<div class="listen">
+  <p>One bar pushed along the "higher" direction, in five steps.</p>
+  <audio controls preload="none" src="media/knob_register.mp3"></audio>
+  <p style="margin-top:12px">The same bar pushed along "busier".</p>
+  <audio controls preload="none" src="media/knob_number_of_notes.mp3"></audio>
+</div>
+
+<p>Interestingly, "more dissonant" isn't: in the latent space, dissonance
+is tangled up with density, because busy bars tend to have more tense combinations.</p>
+
+<div class="listen">
+  <p>The same bar pushed along "more dissonant": it mostly gets busier, from 10 notes to 21.</p>
+  <audio controls preload="none" src="media/knob_dissonance.mp3"></audio>
+</div>
+
+<p>A stricter test is transposition. Shifting a bar up by three semitones (transposing it) keeps
+the music identical, only higher. If the model stored music as "a melody shape plus a key",
+transposing should move every bar's latent code along the same arrow. It doesn't: when I
+transposed 300 bars, each latent code moved in its own direction, with almost nothing in common
+between them. So there's no single "transpose" direction. Pushing a bar along the "higher" arrow
+keeps its rhythm and raises it by roughly the right amount, but it moves its notes unevenly, so
+the melody and the harmony drift: only about a fifth of the notes match the truly transposed
+bar.</p>
+
+<div class="listen">
+  <p>A bar, then the same bar truly transposed up three semitones, then the bar pushed "higher" by
+  the same amount in the latent space. The rhythm is the same, but the notes have drifted.</p>
+  <audio controls preload="none" src="media/transposition.mp3"></audio>
+</div>
+
+<h2 id="music-theory">3. Does music theory emerge in the latent space?</h2>
+
+<!-- circle:start -->
+<figure class="diagram circle">
+<svg viewBox="0 0 680 225" role="img" aria-label="The circle of fifths: C, G, D, A, E, B, F sharp, D flat, A flat, E flat, B flat, F. C's neighbours G and F are highlighted, and a dashed triangle joins C, E and A flat, which are a major third apart.">
+  <circle cx="340" cy="112" r="82" class="ink" stroke-width="1" opacity="0.35"/>
+  <path d="M340,30 A82,82 0 0 1 381.0,41.0" class="accent-line" stroke-width="3" stroke-linecap="round"/>
+  <path d="M340,30 A82,82 0 0 0 299.0,41.0" class="accent-line" stroke-width="3" stroke-linecap="round"/>
+  <polygon points="340.0,30.0 411.0,153.0 269.0,153.0" class="thirds" stroke-width="1.4" stroke-dasharray="5 4"/>
+  <circle cx="340.0" cy="30.0" r="5" class="ink-fill"/>
+  <text x="340.0" y="13.0" text-anchor="middle" font-size="15" font-weight="700" class="ink-fill-text">C</text>
+  <circle cx="381.0" cy="41.0" r="3.5" class="accent"/>
+  <text x="392.0" y="26.9" text-anchor="middle" font-size="15" class="accent-text">G</text>
+  <circle cx="411.0" cy="71.0" r="3.5" class="muted"/>
+  <text x="430.1" y="65.0" text-anchor="middle" font-size="15" class="muted-text">D</text>
+  <circle cx="422.0" cy="112.0" r="3.5" class="muted"/>
+  <text x="444.0" y="117.0" text-anchor="middle" font-size="15" class="muted-text">A</text>
+  <circle cx="411.0" cy="153.0" r="3.5" class="thirds-fill"/>
+  <text x="430.1" y="169.0" text-anchor="middle" font-size="15" class="thirds-fill-text">E</text>
+  <circle cx="381.0" cy="183.0" r="3.5" class="muted"/>
+  <text x="392.0" y="207.1" text-anchor="middle" font-size="15" class="muted-text">B</text>
+  <circle cx="340.0" cy="194.0" r="3.5" class="muted"/>
+  <text x="340.0" y="221.0" text-anchor="middle" font-size="15" class="muted-text">F♯</text>
+  <circle cx="299.0" cy="183.0" r="3.5" class="muted"/>
+  <text x="288.0" y="207.1" text-anchor="middle" font-size="15" class="muted-text">D♭</text>
+  <circle cx="269.0" cy="153.0" r="3.5" class="thirds-fill"/>
+  <text x="249.9" y="169.0" text-anchor="middle" font-size="15" class="thirds-fill-text">A♭</text>
+  <circle cx="258.0" cy="112.0" r="3.5" class="muted"/>
+  <text x="236.0" y="117.0" text-anchor="middle" font-size="15" class="muted-text">E♭</text>
+  <circle cx="269.0" cy="71.0" r="3.5" class="muted"/>
+  <text x="249.9" y="65.0" text-anchor="middle" font-size="15" class="muted-text">B♭</text>
+  <circle cx="299.0" cy="41.0" r="3.5" class="accent"/>
+  <text x="288.0" y="26.9" text-anchor="middle" font-size="15" class="accent-text">F</text>
+</svg>
+<figcaption>The circle of fifths: neighbours, like C, G and F, are related keys. The dashed triangle
+joins keys a major third apart.</figcaption>
+</figure>
+<!-- circle:end -->
+
+<p><strong>Quick answer:</strong> yes, but differently in each model, with the detailed model
+arranging keys along the circle of fifths, as musicians do, and the compact model grouping them by
+major thirds.</p>
+
+<p>The model only ever saw notes on a grid. Music theory, on the other hand, describes
+higher-level relationships between them: keys, chords, harmony. Nobody taught the model any of it.
+But to reconstruct music well, it may have picked up some of these relationships anyway, and
+arranged its latent space around them. I looked for one of the best-known: how the twelve keys
+relate to each other.</p>
+
+<p>Musicians know that some keys are close relatives. The key of C uses the notes C, D, E, F, G, A
+and B; the key of G uses six of the same seven notes, so moving from one to the other sounds
+smooth. F♯, on the other hand, shares only two, and sounds far away. Arranging the twelve keys so
+that neighbours are related gives the <em>circle of fifths</em>.</p>
+
+<div class="listen">
+  <p>The same bar in C, then in G (a close relative), then in F♯ (the most distant key).</p>
+  <audio controls preload="none" src="media/one_bar_three_keys.mp3"></audio>
+</div>
+
+<p>To see whether the models learned this, I played 600 bars in all twelve keys, encoded every
+version, and measured how far apart the versions ended up in the latent space. If the model
+learned how keys relate, versions in related keys should end up closer together.</p>
+
+<figure>
+  <img src="media/key_distances.png" alt="Five grids of distances between the twelve keys. The theory grid and the detailed model's grid both show a dark band along the diagonal; the compact model's grid shows regular stripes.">
+  <figcaption>Distances between keys, in circle-of-fifths order (dark means close).</figcaption>
+</figure>
+
+<p>The detailed model rediscovered the circle of fifths. For it, the closest keys to C are G and F,
+its neighbours on the circle, and the circle orders its distances almost perfectly (a rank
+correlation of 0.89). The really interesting part is that it matches the circle better than simply comparing which notes the keys
+use (0.75), even though nobody told it about keys; it only had to replay bars, and it arranged the keys the way
+musicians do.</p>
+
+<p>The compact model found something else: it groups keys that are a major third apart, like C, E
+and A♭, the corners of the dashed triangle above.
+That is also a structure music theorists know: these three keys split the octave into equal steps.
+The untrained control shows a different, weaker pattern, so both structures come from learning, not from the
+architecture.</p>
+
+<p>Why would the two models disagree? I can't prove it, but there are clues. The detailed model
+keeps a fine record of which notes a bar uses, and keys that share many notes, like C and G, end up
+close: the circle of fifths falls out of the notes themselves, and the model sharpens it. The
+compact model has less room, and seems to keep a coarser record of pitch in which notes a major
+third apart are easier to mix up. That may be less arbitrary than it sounds: major and minor
+chords are built from thirds, so a record of pitch organised around them may be a cheap way to
+keep chords recognisable with little room, at the cost of blurring which key they belong to.</p>
+
+<p>So how much a model is allowed to remember changes what it discovers. Both structures are real
+features of Western harmony, and neither model is wrong. But the same music, seen through a
+narrower window, gave a different piece of theory. What a model "learns" depends not only on the
+data, but on the constraints it learns under.</p>
+
+<h2 id="music-history">4. Does the model's picture of music history match ours?</h2>
+
+<p><strong>Quick answer:</strong> partly, with a clear divide between Classical and Romantic music
+and Beethoven in between, but no further change after about 1830, and much of it already visible in
+simple surface statistics.</p>
+
+<p>This section asks two things. Can the latent codes tell who wrote a bar, and when? And when the
+model's picture of musical change is spelled out, does it match what we know about the eras of
+classical music and how their writing differs? To keep it fair, I transposed every bar to C, so
+that a composer's favourite keys can't give them away, and every piece is judged by a classifier
+that was never trained on it.</p>
+
+<h3>Who wrote this bar, and when?</h3>
+
+<p>A classifier reads the latent codes and guesses the composer, out of eleven. I scored it on
+single bars, and on whole pieces by pooling its guesses over all their bars. Guessing at random
+would get about 9%.</p>
+
+<div class="table-wrap">
+<table class="scores">
+  <thead>
+    <tr><th>Composers recognised</th><th>Compact</th><th>Detailed</th><th>Untrained</th><th>Simple measurements</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>From one bar</td><td>32%</td><td>33%</td><td>27%</td><td>29%</td></tr>
+    <tr><td>From a whole piece</td><td>51%</td><td>48%</td><td>42%</td><td>42%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>Both trained models recognise composers far above chance, but the controls are close behind:
+much of a composer's fingerprint is already visible in simple things like register, chord sizes and
+note lengths. The latent code's real edge shows on whole pieces, about ten points above both
+controls. </p>
+
+<p>Some composers are much easier to recognise than others. Among the piano composers, Chopin is the easiest: more than half
+of his pieces are attributed to him. That's probably less about his genius than about the corpus,
+which only holds his mazurkas, all in 3/4. When the classifier gets it wrong, the mistake sometimes makes musical sense, like Mozart and
+Beethoven being mistaken for each other. But overall, composers who lived closer in time aren't
+confused more often.</p>
+
+<p>The timeline does show up when the question is asked directly. Asked to date unseen piano
+pieces from their bars, a regression reading the compact model's
+latent codes is off by 29 years on a typical piece. The plot below shows how it gets there: it puts the music in roughly
+the right order (Mozart before Chopin before Grieg and Medtner), but squeezes everything towards the
+middle, dating Mozart around 1810 and Medtner around 1850. A sense of time, then, but a blurred one:
+nobody would mistake it for a musicologist.</p>
+
+<figure>
+  <img src="media/dating_pieces.png" alt="A scatter plot of the year guessed from the latent codes against the true year of composition for each piano piece.">
+  <figcaption>True against guessed year, one dot per piano piece.</figcaption>
+</figure>
+
+<h3>What does "later" sound like?</h3>
+
+<!-- composers:start -->
+<figure class="diagram">
+<svg viewBox="0 0 680 304" role="img" aria-label="Composers in chronological order, each placed on the model's early-to-late scale. Mozart sits at the early end, Beethoven's early piano pieces halfway, his late pieces and every later composer near the late end.">
+  <line x1="311.6" y1="26" x2="311.6" y2="292" class="ink" stroke-width="1" stroke-dasharray="3 4" opacity="0.4"/>
+  <text x="311.6" y="18" text-anchor="middle" font-size="12" class="muted">like the earliest bars</text>
+  <line x1="601.9" y1="26" x2="601.9" y2="292" class="ink" stroke-width="1" stroke-dasharray="3 4" opacity="0.4"/>
+  <text x="601.9" y="18" text-anchor="middle" font-size="12" class="muted">like the latest bars</text>
+  <text x="0" y="50.5" font-size="13">Mozart</text>
+  <text x="194" y="50.5" font-size="12" text-anchor="end" class="muted">1783</text>
+  <line x1="210" y1="46.0" x2="660" y2="46.0" class="beat"/>
+  <circle cx="268.1" cy="46.0" r="6" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <text x="0" y="74.5" font-size="13">Beethoven, early</text>
+  <text x="194" y="74.5" font-size="12" text-anchor="end" class="muted">1798</text>
+  <line x1="210" y1="70.0" x2="660" y2="70.0" class="beat"/>
+  <circle cx="453.9" cy="70.0" r="6" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <text x="0" y="98.5" font-size="13">Beethoven, late</text>
+  <text x="194" y="98.5" font-size="12" text-anchor="end" class="muted">1822</text>
+  <line x1="210" y1="94.0" x2="660" y2="94.0" class="beat"/>
+  <circle cx="558.4" cy="94.0" r="6" style="fill: color-mix(in oklab, var(--accent-2) 29%, var(--accent))"/>
+  <text x="0" y="122.5" font-size="13">Chopin</text>
+  <text x="194" y="122.5" font-size="12" text-anchor="end" class="muted">1838</text>
+  <line x1="210" y1="118.0" x2="660" y2="118.0" class="beat"/>
+  <circle cx="599.0" cy="118.0" r="6" style="fill: color-mix(in oklab, var(--accent-2) 41%, var(--accent))"/>
+  <text x="0" y="146.5" font-size="13">Schumann</text>
+  <text x="194" y="146.5" font-size="12" text-anchor="end" class="muted">1839</text>
+  <line x1="210" y1="142.0" x2="660" y2="142.0" class="beat"/>
+  <circle cx="610.6" cy="142.0" r="6" style="fill: color-mix(in oklab, var(--accent-2) 42%, var(--accent))"/>
+  <text x="0" y="170.5" font-size="13">Liszt</text>
+  <text x="194" y="170.5" font-size="12" text-anchor="end" class="muted">1858</text>
+  <line x1="210" y1="166.0" x2="660" y2="166.0" class="beat"/>
+  <circle cx="587.4" cy="166.0" r="6" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <text x="0" y="194.5" font-size="13">Tchaikovsky</text>
+  <text x="194" y="194.5" font-size="12" text-anchor="end" class="muted">1876</text>
+  <line x1="210" y1="190.0" x2="660" y2="190.0" class="beat"/>
+  <circle cx="543.9" cy="190.0" r="6" style="fill: color-mix(in oklab, var(--accent-2) 69%, var(--accent))"/>
+  <text x="0" y="218.5" font-size="13">Dvořák</text>
+  <text x="194" y="218.5" font-size="12" text-anchor="end" class="muted">1879</text>
+  <line x1="210" y1="214.0" x2="660" y2="214.0" class="beat"/>
+  <circle cx="610.6" cy="214.0" r="6" style="fill: color-mix(in oklab, var(--accent-2) 72%, var(--accent))"/>
+  <text x="0" y="242.5" font-size="13">Grieg</text>
+  <text x="194" y="242.5" font-size="12" text-anchor="end" class="muted">1893</text>
+  <line x1="210" y1="238.0" x2="660" y2="238.0" class="beat"/>
+  <circle cx="509.0" cy="238.0" r="6" style="fill: color-mix(in oklab, var(--accent-2) 82%, var(--accent))"/>
+  <text x="0" y="266.5" font-size="13">Debussy</text>
+  <text x="194" y="266.5" font-size="12" text-anchor="end" class="muted">1905</text>
+  <line x1="210" y1="262.0" x2="660" y2="262.0" class="beat"/>
+  <circle cx="581.6" cy="262.0" r="6" style="fill: color-mix(in oklab, var(--accent-2) 91%, var(--accent))"/>
+  <text x="0" y="290.5" font-size="13">Medtner</text>
+  <text x="194" y="290.5" font-size="12" text-anchor="end" class="muted">1917</text>
+  <line x1="210" y1="286.0" x2="660" y2="286.0" class="beat"/>
+  <circle cx="596.1" cy="286.0" r="6" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+</svg>
+<figcaption>Where each composer's music falls on the model's early-to-late scale, learned from the
+piano music of the other composers.</figcaption>
+</figure>
+<!-- composers:end -->
+
+<p>Finally, I drew an arrow in the compact model's latent space from the
+earliest piano bars (Mozart, early Beethoven) to the latest ones (Grieg, Debussy, Medtner). First,
+where does each composer fall along it?</p>
+
+<p>The model sees one big divide in music history. Mozart sits at the early end, and every composer
+from Chopin onwards sits towards the late end. Beethoven's piano music falls in between: his early
+pieces about halfway, his late ones close to the Romantics, much like his textbook role as the
+bridge between the Classical and Romantic eras. After about 1830, the arrow sees no further change:
+Medtner, writing in 1917, sits where Chopin does. The corpus is partly to blame, as its latest
+composers are Medtner, who wrote in a late-Romantic style, and Debussy, with only three pieces.</p>
+
+<p>Then I pushed bars of Mozart and Beethoven along the arrow. They get lower and spread wider
+across the keyboard, with bigger chords and longer notes: the fuller piano writing of the late 19th
+century. Textbooks would expect later music to be more dissonant too, but this corpus shows no such trend, and neither does the arrow.</p>
+
+<div class="listen">
+  <p>A bar from the 1780s–1800s, pushed step by step towards "later" in the latent space.</p>
+  <audio controls preload="none" src="media/towards_later.mp3"></audio>
+</div>
+
+<h2 id="limitations">Limitations and future work</h2>
+
+<p>Each limit of this study suggests a next step.</p>
+<ul class="limits">
+  <li><strong>One bar is very little music.</strong> Style, harmony and form unfold over phrases,
+  which the model never sees.
+  <span class="next"><em>Next:</em> encode whole phrases, or model sequences of latent codes.</span></li>
+  <li><strong>The corpus is small and unbalanced.</strong> Chopin is only represented by mazurkas,
+  Debussy by three pieces, the latest composers still write in a late-Romantic style, and Corelli
+  is the only Baroque composer.
+  <span class="next"><em>Next:</em> more composers and eras, compared within a single genre.</span></li>
+  <li><strong>The model can't yet generate convincing bars from random sampling of the latent space.</strong> Random positions
+  decode to bars with gaps of silence, even with a heavier penalty (β = 0.3).
+  <span class="next"><em>Next:</em> learn the shape real music takes in the latent space, and draw
+  new positions from it.</span></li>
+</ul>
+
+<h2 id="looking-back">Looking back</h2>
+
+<p>The most striking thing, for me, is how much music theory and structure appears in a model that
+was only ever asked to replay single bars: knobs for register and density, keys arranged by fifths
+or by major thirds, a sense of who wrote a piece and of how piano music changed over time. None of
+it was taught.</p>
+
+<p>When I wrote my thesis, I suspected that some of this might come from the model's architecture
+rather than from the music. Revisiting it, I compared every result with an untrained model and with
+simple measurements. That changed several conclusions: part of what looks like learning is just the
+architecture, or just counting notes. But once you subtract that, quite a lot is left.</p>
+
+<p>To me, that's a testament to how much deep learning models can learn from data alone, even small
+ones, built without the transformers behind today's chatbots.</p>
+
+<footer>
+  <p>The code, the training setup and all the analysis notebooks are on
+  <a href="https://github.com/matisbv/vae-music-spaces">GitHub</a>.</p>
+  <p>My original 2023 thesis, <em>Learning Latent Representations of Western Classical Music
+  Using Variational Autoencoders</em> (ETH Zurich), is available on
+  <a href="https://zenodo.org/records/19537861">Zenodo</a>.</p>
+  <p>The music comes from the <a href="https://github.com/DCMLab/dcml_corpora">DCML corpora</a> by the Digital and Cognitive Musicology Lab at EPFL.</p>
+  <p>The model architecture is <a href="https://arxiv.org/pdf/2008.07118">PianoTree VAE</a> by
+  Ziyu Wang and colleagues (ISMIR 2020).</p>
+  <p>The piano in the sound examples is the YDP Grand Piano SoundFont by
+  <a href="https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html">FreePats</a>, built from
+  Yamaha Disklavier Pro samples recorded by Zenph Studios for the OLPC sound library, used under
+  a Creative Commons Attribution 3.0
+  licence.</p>
+</footer>
+
+</article>
+</main>
+<footer class="wrap site-footer"><span>© 2026 Matis Brassard-Verrier</span><a href="#top">Back to top</a></footer>
+</body>
+</html>

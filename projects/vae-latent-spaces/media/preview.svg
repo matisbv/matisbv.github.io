@@ -1,0 +1,176 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 176" role="img" aria-label="Ten small piano rolls in a row: bars by Corelli, Mozart, Chopin and Debussy, with two bars decoded from points between each of them, changing gradually from one to the next.">
+  <style>
+    :root { --surface: #f3f1ea; --rule: #e2ded3; --accent: #2f5d8a; --accent-2: #b5562d; }
+    @media (prefers-color-scheme: dark) {
+      :root { --surface: #222326; --rule: #34353a; --accent: #8fb6dd; --accent-2: #e8a07a; }
+    }
+    .soft { fill: var(--surface); stroke: var(--rule); }
+    .beat { stroke: var(--rule); stroke-width: 1; }
+  </style>
+  <defs>
+    <linearGradient id="hero-four-stops-line" gradientUnits="userSpaceOnUse" x1="32.4" x2="687.6" y1="0" y2="0">
+      <stop offset="0" style="stop-color: var(--accent)"/>
+      <stop offset="1" style="stop-color: var(--accent-2)"/>
+    </linearGradient>
+    <marker id="hero-four-stops-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" style="fill: var(--accent-2)"/>
+    </marker>
+  </defs>
+  <rect x="0.0" y="4" width="64.8" height="150" rx="5" class="soft"/>
+  <line x1="22.9" y1="7" x2="22.9" y2="151" class="beat"/>
+  <line x1="41.9" y1="7" x2="41.9" y2="151" class="beat"/>
+  <rect x="4.0" y="50.4" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="4.0" y="42.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="13.5" y="47.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="13.5" y="37.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="22.9" y="50.4" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="22.9" y="42.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="4.0" y="90.2" width="36.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="32.4" y="55.3" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="32.4" y="47.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="41.9" y="60.3" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="41.9" y="50.4" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 0%, var(--accent))"/>
+  <rect x="72.8" y="4" width="64.8" height="150" rx="5" class="soft"/>
+  <line x1="95.7" y1="7" x2="95.7" y2="151" class="beat"/>
+  <line x1="114.7" y1="7" x2="114.7" y2="151" class="beat"/>
+  <rect x="76.8" y="30.4" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="76.8" y="60.3" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="86.3" y="37.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="86.3" y="30.4" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="95.7" y="42.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="95.7" y="37.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="76.8" y="102.7" width="36.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="105.2" y="47.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="105.2" y="42.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="114.7" y="55.3" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="114.7" y="50.4" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="124.1" y="60.3" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 11%, var(--accent))"/>
+  <rect x="145.6" y="4" width="64.8" height="150" rx="5" class="soft"/>
+  <line x1="168.5" y1="7" x2="168.5" y2="151" class="beat"/>
+  <line x1="187.5" y1="7" x2="187.5" y2="151" class="beat"/>
+  <rect x="149.6" y="20.5" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="149.6" y="60.3" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="154.3" y="25.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="159.1" y="30.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="149.6" y="102.7" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="149.6" y="90.2" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="163.8" y="30.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="168.5" y="37.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="173.3" y="42.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="178.0" y="42.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="182.7" y="47.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="192.2" y="55.3" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="187.5" y="50.4" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="196.9" y="60.3" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 22%, var(--accent))"/>
+  <rect x="218.4" y="4" width="64.8" height="150" rx="5" class="soft"/>
+  <line x1="241.3" y1="7" x2="241.3" y2="151" class="beat"/>
+  <line x1="260.3" y1="7" x2="260.3" y2="151" class="beat"/>
+  <rect x="222.4" y="13.0" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="227.1" y="18.0" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="231.9" y="20.5" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="222.4" y="110.1" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="222.4" y="102.7" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="222.4" y="90.2" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="236.6" y="25.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="241.3" y="30.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="246.1" y="32.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="250.8" y="37.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="255.5" y="42.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="260.3" y="47.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="265.0" y="50.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="269.7" y="55.3" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="274.5" y="60.3" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 33%, var(--accent))"/>
+  <rect x="291.2" y="4" width="64.8" height="150" rx="5" class="soft"/>
+  <line x1="314.1" y1="7" x2="314.1" y2="151" class="beat"/>
+  <line x1="333.1" y1="7" x2="333.1" y2="151" class="beat"/>
+  <rect x="295.2" y="13.0" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="299.9" y="13.0" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="304.7" y="18.0" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="295.2" y="120.1" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="295.2" y="102.7" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="295.2" y="90.2" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="309.4" y="25.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="314.1" y="30.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="318.9" y="25.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="323.6" y="42.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="328.3" y="37.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="333.1" y="55.3" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="337.8" y="42.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="342.5" y="60.3" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="347.3" y="60.3" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 44%, var(--accent))"/>
+  <rect x="364.0" y="4" width="64.8" height="150" rx="5" class="soft"/>
+  <line x1="386.9" y1="7" x2="386.9" y2="151" class="beat"/>
+  <line x1="405.9" y1="7" x2="405.9" y2="151" class="beat"/>
+  <rect x="368.0" y="30.4" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="377.5" y="22.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="368.0" y="132.6" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="368.0" y="102.7" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="382.2" y="25.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="386.9" y="30.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="391.7" y="25.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="396.4" y="35.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="386.9" y="82.7" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="386.9" y="65.3" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="401.1" y="37.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="405.9" y="42.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="415.3" y="55.3" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="405.9" y="82.7" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="405.9" y="67.8" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 56%, var(--accent))"/>
+  <rect x="436.8" y="4" width="64.8" height="150" rx="5" class="soft"/>
+  <line x1="459.7" y1="7" x2="459.7" y2="151" class="beat"/>
+  <line x1="478.7" y1="7" x2="478.7" y2="151" class="beat"/>
+  <rect x="440.8" y="52.8" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="440.8" y="142.5" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="455.0" y="42.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="459.7" y="35.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="464.5" y="30.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="469.2" y="35.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="459.7" y="95.2" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="459.7" y="82.7" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="459.7" y="72.8" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="478.7" y="37.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="478.7" y="95.2" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="478.7" y="82.7" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="478.7" y="72.8" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="488.1" y="42.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 67%, var(--accent))"/>
+  <rect x="509.6" y="4" width="64.8" height="150" rx="5" class="soft"/>
+  <line x1="532.5" y1="7" x2="532.5" y2="151" class="beat"/>
+  <line x1="551.5" y1="7" x2="551.5" y2="151" class="beat"/>
+  <rect x="513.6" y="42.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="513.6" y="112.6" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="513.6" y="52.8" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="527.8" y="35.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="537.3" y="25.4" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="542.0" y="22.9" width="3.7" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="532.5" y="72.8" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="532.5" y="52.8" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="551.5" y="35.4" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="551.5" y="77.8" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="551.5" y="60.3" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="560.9" y="32.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 78%, var(--accent))"/>
+  <rect x="582.4" y="4" width="64.8" height="150" rx="5" class="soft"/>
+  <line x1="605.3" y1="7" x2="605.3" y2="151" class="beat"/>
+  <line x1="624.3" y1="7" x2="624.3" y2="151" class="beat"/>
+  <rect x="586.4" y="32.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 89%, var(--accent))"/>
+  <rect x="586.4" y="55.3" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 89%, var(--accent))"/>
+  <rect x="586.4" y="42.9" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 89%, var(--accent))"/>
+  <rect x="595.9" y="37.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 89%, var(--accent))"/>
+  <rect x="614.8" y="30.4" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 89%, var(--accent))"/>
+  <rect x="605.3" y="32.9" width="27.4" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 89%, var(--accent))"/>
+  <rect x="586.4" y="77.8" width="55.8" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 89%, var(--accent))"/>
+  <rect x="624.3" y="55.3" width="17.9" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 89%, var(--accent))"/>
+  <rect x="633.7" y="32.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 89%, var(--accent))"/>
+  <rect x="655.2" y="4" width="64.8" height="150" rx="5" class="soft"/>
+  <line x1="678.1" y1="7" x2="678.1" y2="151" class="beat"/>
+  <line x1="697.1" y1="7" x2="697.1" y2="151" class="beat"/>
+  <rect x="659.2" y="32.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="668.7" y="37.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="678.1" y="32.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="687.6" y="30.4" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="697.1" y="37.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="659.2" y="67.8" width="55.8" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="659.2" y="55.3" width="55.8" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="659.2" y="47.9" width="55.8" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <rect x="706.5" y="32.9" width="8.5" height="1.9" rx="1" style="fill: color-mix(in oklab, var(--accent-2) 100%, var(--accent))"/>
+  <line x1="32.4" y1="168" x2="687.6" y2="168" stroke="url(#hero-four-stops-line)" stroke-width="2" marker-end="url(#hero-four-stops-head)"/>
+</svg>
